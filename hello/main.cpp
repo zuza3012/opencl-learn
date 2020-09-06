@@ -202,7 +202,6 @@ int main(int argc, char* argv[]){
         std::cout << "Could not open command queue!" << std::endl;
         return EXIT_FAILURE;
     }*/
-
     device_in_txt = clCreateBuffer(cl_compute_context, CL_MEM_READ_ONLY, dataBytes, NULL, &cli_err_num);
     device_out_txt = clCreateBuffer(cl_compute_context, CL_MEM_WRITE_ONLY, dataBytes, NULL, &cli_err_num);
 
