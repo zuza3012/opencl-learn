@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++0x  -rdynamic CMakeFiles/hello.dir/main.cpp.o  -o hello  -L/usr/lib/x86_64-linux-gnu/libOpenCL.so -Wl,-rpath,/usr/lib/x86_64-linux-gnu/libOpenCL.so -lOpenCL 
