@@ -231,18 +231,31 @@ int main(int argc, char* argv[]){
         host_out_c = new float[N];
 
         cl::Platform::get(&platforms);
-        platforms[0].getDevices(CL_DEVICE_TYPE_GPU, &devices);
+        platforms[0].getDevices(CL_DEVICE_TYPE_ALL, &devices);
 
         std::cout << "test 1" << std::endl;
 
-        cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_GPU, properties);
-
+        //cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
+        //cl::Context context(CL_DEVICE_TYPE_GPU, properties);
+        cl::Context context(devices);
+        cl::CommandQueue queue = cl::CommandQueue(context, devices[0]);
+        
         std::cout << "test 2" << std::endl;
 
-        // sprawdzic czy da sie tak tylko: devices = context.getInfo<CL_CONTEXT_DEVICES>();
-        std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
+         // tworzenie buforow
+        cl::Buffer device_in_a(context, CL_MEM_READ_ONLY, N * sizeof(float));
+        cl::Buffer device_in_b(context, CL_MEM_READ_ONLY, N * sizeof(float));
+        cl::Buffer device_out_c(context, CL_MEM_WRITE_ONLY, N * sizeof(float));
+
+
+        queue.enqueueWriteBuffer(device_in_a, true, 0, N * sizeof(float), (void*)host_in_a);
+        queue.enqueueWriteBuffer(device_in_b, true, 0, N * sizeof(float), (void*)host_in_b);
+
+        // sprawdzic czy da sie tak tylko: devices = context.getInfo<CL_CONTEXT_DEVICES>();
+        //std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+
+        
         std::cout << "test 3" << std::endl;
 
         // zrodla jadra obliczeniowego
@@ -289,24 +302,21 @@ int main(int argc, char* argv[]){
 
         std::cout << "test 7" << std::endl;
 
-        // tworzenie buforow
-        cl::Buffer device_in_a(context, CL_MEM_READ_ONLY, N * sizeof(float));
-        cl::Buffer device_in_b(context, CL_MEM_READ_ONLY, N * sizeof(float));
-        cl::Buffer device_out_c(context, CL_MEM_WRITE_ONLY, N * sizeof(float));
+       
 
         
 
-        cl::Event event;
-        cl::CommandQueue queue(context, devices[0], 0, &cli_err); // opisac parametry
+        
+        //cl::CommandQueue queue(context, devices[0], 0, &cli_err); // opisac parametry
 
-        queue.enqueueWriteBuffer(device_in_a, true, 0, N * sizeof(float), (void*)host_in_a);
-        queue.enqueueWriteBuffer(device_in_b, true, 0, N * sizeof(float), (void*)host_in_b);
+        
 
         kernel.setArg(0, device_in_a);
         kernel.setArg(1, device_in_b);
         kernel.setArg(2, device_out_c);
         kernel.setArg(3, sizeof(int), (void*) &N);
 
+        cl::Event event;
         // wywolanie jadra obliczeniowego
         queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N,1),cl::NullRange, NULL, &event); // kernel, offset, global, local, vektor z eventami, wsk na eventy
 
