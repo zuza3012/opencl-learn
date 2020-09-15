@@ -174,10 +174,9 @@ const char *getErrorString(cl_int error){
 const char* kernelSource = 
 "__kernel void sum(\n"
 "__global const float *a, __global const float *b,\n"
-"__global float *c, const int N){\n"
+"__global float *c){\n"
 "\n"
 "int id = get_global_id(0);\n"
-"if(id < N)\n"
 "c[id] = a[id] + b[id];\n"
 "\n"
 "}\n"
@@ -185,17 +184,13 @@ const char* kernelSource =
 
 int i;
 
-std::vector<cl::Platform> platforms;
-std::vector<cl::Device> devices;
-std::vector<cl::Kernel> allKernels;
+
 
 cl_int cli_err;
 
-float *host_in_a;
-float *host_in_b;
-float *host_out_c;
 
-void printArray(std::string header, const float *vec){
+
+void printArray(std::string header, const int *vec){
     std::cout << "\n" << header << "\n";
 
     for(int i = 0; i < N; i++){
@@ -216,63 +211,77 @@ void fillArray(float *vec, int _seed){
 }
 
 int main(int argc, char* argv[]){
+    size_t datasize = N * sizeof(int);
+    
+    // nie robić tak: int *A;, a potem w mainie: A = new int[N]!!!!!
+    int *A = new int[N];
+    int *B = new int[N];
+    int *C = new int[N];
+    
+
+    for(int i = 0; i < N; i++){
+        A[i] = i;
+        B[i] = i;
+    }
+    printArray("vector A:", A);
+    printArray("vector B:", B);
+
 
     try{
-
-        host_in_a = new float[N];
-        fillArray(host_in_a, 1000);
-        printArray("vector A:", host_in_a);
-
-        host_in_b = new float[N];
-        fillArray(host_in_b, 1560);
-        printArray("vector B:", host_in_b);
-
-
-        host_out_c = new float[N];
-
+        std::vector<cl::Platform> platforms; // to musi byc tutaj!!!
         cl::Platform::get(&platforms);
+
+        std::vector<cl::Device> devices;
         platforms[0].getDevices(CL_DEVICE_TYPE_ALL, &devices);
-
-        std::cout << "test 1" << std::endl;
-
-        //cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
-        //cl::Context context(CL_DEVICE_TYPE_GPU, properties);
+            
         cl::Context context(devices);
+
         cl::CommandQueue queue = cl::CommandQueue(context, devices[0]);
-        
-        std::cout << "test 2" << std::endl;
+
+        cl::Buffer bufferA(context, CL_MEM_READ_ONLY, datasize);
+        cl::Buffer bufferB(context, CL_MEM_READ_ONLY, datasize);
+        cl::Buffer bufferC(context, CL_MEM_WRITE_ONLY, datasize);
+
+        queue.enqueueWriteBuffer(bufferA, CL_TRUE, 0, datasize, A);
+        queue.enqueueWriteBuffer(bufferB, CL_TRUE, 0, datasize, B);
 
 
-         // tworzenie buforow
-        cl::Buffer device_in_a(context, CL_MEM_READ_ONLY, N * sizeof(float));
-        cl::Buffer device_in_b(context, CL_MEM_READ_ONLY, N * sizeof(float));
-        cl::Buffer device_out_c(context, CL_MEM_WRITE_ONLY, N * sizeof(float));
-
-
-        queue.enqueueWriteBuffer(device_in_a, true, 0, N * sizeof(float), (void*)host_in_a);
-        queue.enqueueWriteBuffer(device_in_b, true, 0, N * sizeof(float), (void*)host_in_b);
-
-        // sprawdzic czy da sie tak tylko: devices = context.getInfo<CL_CONTEXT_DEVICES>();
-        //std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
-
-        
-        std::cout << "test 3" << std::endl;
-
-        // zrodla jadra obliczeniowego
         cl::Program::Sources source(1, std::make_pair(kernelSource, strlen(kernelSource)));
         
-        std::cout << "test 4" << std::endl;
+        
 
         // program + build
         cl::Program program = cl::Program(context, source);
-        std::cout << "test 5" << std::endl;
 
-        
+        program.build(devices);
+
+        cl::Kernel kernel(program, "sum");
+
+
+        kernel.setArg(0, bufferA);
+        kernel.setArg(1, bufferB);
+        kernel.setArg(2, bufferC);
+
+        cl::NDRange global(N);
+        cl::NDRange local(4);
+
+        queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, local); // kernel, offset, global, local, vektor z eventami, wsk na eventy
+
+        queue.enqueueReadBuffer(bufferC, CL_TRUE, 0, datasize, C);
+
+        printArray("output:", C);
+
+
+       
+    }catch(cl::Error e){
+         std::cout << e.what() << ": Error code " << e.err() <<  getErrorString(e.err()) << std::endl;
+
+    }
 
         //program.build(devices);
-
+        /*
         try{
-            program.build(devices);
+            
         }
         catch (cl::Error& e2){
             if (e2.err() == CL_BUILD_PROGRAM_FAILURE){
@@ -293,58 +302,36 @@ int main(int argc, char* argv[]){
                 throw e2;
             }
         }
-
+        */
         
 
-        std::cout << "test 6" << std::endl;
-        // stworzenie kernela
-        cl::Kernel kernel(program, "sum", &cli_err);
 
-        std::cout << "test 7" << std::endl;
-
-       
-
-        
-
-        
-        //cl::CommandQueue queue(context, devices[0], 0, &cli_err); // opisac parametry
-
-        
-
-        kernel.setArg(0, device_in_a);
-        kernel.setArg(1, device_in_b);
-        kernel.setArg(2, device_out_c);
-        kernel.setArg(3, sizeof(int), (void*) &N);
-
-        cl::Event event;
+        //cl::Event event;
         // wywolanie jadra obliczeniowego
-        queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N,1),cl::NullRange, NULL, &event); // kernel, offset, global, local, vektor z eventami, wsk na eventy
-
-        event.wait();
+       
+        //event.wait();
 
         //odczytanie danych z buffera wyjsciowego
-        queue.enqueueReadBuffer(device_out_c, true, 0, sizeof(float) * N, (void*)host_out_c);
-
-        printArray("output:", host_out_c);
-
+        
         /*
         clReleaseMemObject(device_in_a());
-        clReleaseMemObject(device_in_b());
+        8clReleaseMemObject(device_in_b());
         clReleaseMemObject(device_out_c());
         */
         
        
        
-
+/*
     }catch(cl::Error e){
 
         std::cout << e.what() << ": Error code " << e.err() <<  getErrorString(e.err()) << std::endl;
 
 
     }
-    delete host_in_a;
-    delete host_in_b;
-    delete host_out_c;
+    */
+    //delete host_in_a;
+    //delete host_in_b;
+   // delete host_out_c;
 
     
     return 0;
