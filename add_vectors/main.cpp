@@ -184,10 +184,7 @@ const char* kernelSource =
 
 int i;
 
-
-
 cl_int cli_err;
-
 
 
 void printArray(std::string header, const int *vec){
@@ -245,8 +242,17 @@ int main(int argc, char* argv[]){
         queue.enqueueWriteBuffer(bufferA, CL_TRUE, 0, datasize, A);
         queue.enqueueWriteBuffer(bufferB, CL_TRUE, 0, datasize, B);
 
+        std::string pwd_path = getenv("PWD");
+        std::string file_rel_path = "/../add_vectors.cl";
 
-        cl::Program::Sources source(1, std::make_pair(kernelSource, strlen(kernelSource)));
+        std::string path = pwd_path+file_rel_path;
+    
+
+        std::ifstream sourceFile(path);
+        std::string sourceCode(std::istreambuf_iterator <char>(sourceFile),(std::istreambuf_iterator <char>()));
+
+        cl::Program::Sources source(1, std::make_pair(sourceCode.c_str(), sourceCode.length() + 1));
+       //cl::Program::Sources source(1, std::make_pair(kernelSource, strlen(kernelSource)));
         
         
 
