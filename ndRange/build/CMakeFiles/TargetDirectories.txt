@@ -1,0 +1,3 @@
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/ndRange/build/CMakeFiles/rebuild_cache.dir
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/ndRange/build/CMakeFiles/ndrange.dir
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/ndRange/build/CMakeFiles/edit_cache.dir
