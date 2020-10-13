@@ -1,0 +1,3 @@
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/reduction/build/CMakeFiles/rebuild_cache.dir
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/reduction/build/CMakeFiles/reduction.dir
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/reduction/build/CMakeFiles/edit_cache.dir

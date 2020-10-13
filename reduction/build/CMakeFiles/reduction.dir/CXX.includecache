@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zuzanna/Documents/openCL/nauka/opencl-learn/reduction/main.cpp
+ctime
+-
+fstream
+-
+iostream
+-
+exception
+-
+OpenCL/cl.hpp
+-
+CL/opencl.h
+-
+CL/cl.hpp
+-
+
