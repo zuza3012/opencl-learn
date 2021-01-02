@@ -1,0 +1,1 @@
+/usr/bin/c++  -D_REETRANT -Wall -Wextra -pedantic -Wno-long-long -ggdb -O0 -g  -rdynamic CMakeFiles/dot.dir/main.cpp.o  -o dot   -L/usr/lib/x86_64-linux-gnu/libOpenCL.so  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/libOpenCL.so -lOpenCL 

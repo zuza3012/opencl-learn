@@ -1,0 +1,3 @@
+/home/zuza/Documents/opencl/opencl-learn/dot_product/build/CMakeFiles/rebuild_cache.dir
+/home/zuza/Documents/opencl/opencl-learn/dot_product/build/CMakeFiles/edit_cache.dir
+/home/zuza/Documents/opencl/opencl-learn/dot_product/build/CMakeFiles/dot.dir
