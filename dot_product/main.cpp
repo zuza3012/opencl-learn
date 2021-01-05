@@ -21,8 +21,8 @@
    #include <CL/cl.hpp>   
 #endif
 
-const int N = 4;
-const int size = 4;
+const int N = 5;
+const int size = 5;
 
 
 ////////////////
@@ -316,13 +316,14 @@ int main(int argc, char* argv[]){
     //std::array<std::array<int, 4>, 4> arrB = {{{2,2,2,2}, {2,2,2,2}, {2,2,2,2}, {2,2,2,2}}};
     //std::array<std::array<int, 4>, 4> arrC = {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}};
 
-    std::array<std::array<int, 4>, 4> matrixA, matrixB, matrixC;
+    std::array<std::array<int, 5>, 5> matrixA, matrixB, matrixC;
     //std::vector< std::vector<int> > matrixC;
     //int * matrixC = new int[4*4];
 
    // for(int i = 0; i < 16; i++){
         //matrixC[i] = 0;
     //}
+    /*
     std::cout << "matrix A:" << std::endl;
     CreateMatrix(matrixA, 1.0);
     std::cout << "matrix B:" << std::endl;
@@ -330,7 +331,43 @@ int main(int argc, char* argv[]){
     std::cout << "matrix C:" << std::endl;
     CreateMatrix(matrixC, 0.0);
     //CreateMatrix(matrixC, 4, 0.0);
-    int widthA = 4, widthB = 4, heightA = 4, heightB = 4;
+    
+    */
+   int widthA = 5, widthB = 5, heightA = 5, heightB = 5;
+
+    for (int i = 0; i < N; i++ ){     // rows
+        for(int j = 0; j < N; j++){    //   cols     
+            matrixA[i][j] = 1;
+            if(i >= 3)
+                matrixA[i][j] = 0;
+            std::cout << matrixA[i][j] << " ";            
+        
+        }
+        std::cout << std:: endl;  
+    }        
+    std::cout << std::endl;
+
+    for (int i = 0; i < N; i++ ){      
+        for(int j = 0; j < N; j++){            
+            matrixB[i][j] = 2;
+            if(j>= 4)
+                matrixB[i][j] = 0;
+            std::cout << matrixB[i][j] << " ";            
+        }
+        std::cout << std:: endl;  
+    }        
+
+    std::cout << std::endl;
+    for (int i = 0; i < N; i++ ){      
+        for(int j = 0; j < N; j++){            
+            matrixC[i][j] = 0;
+            
+            std::cout << matrixC[i][j] << " ";            
+        }
+        std::cout << std:: endl;  
+    }        
+    
+    
 
     cl::Program program;
     std::vector<cl::Device> devices;
