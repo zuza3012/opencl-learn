@@ -1,1 +1,0 @@
-/usr/bin/c++  -std=c++0x  -rdynamic CMakeFiles/reduction.dir/main.cpp.o  -o reduction  -L/usr/lib/x86_64-linux-gnu/libOpenCL.so -Wl,-rpath,/usr/lib/x86_64-linux-gnu/libOpenCL.so -lOpenCL 

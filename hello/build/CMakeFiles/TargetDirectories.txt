@@ -1,3 +1,0 @@
-/home/zuzanna/Documents/openCL/nauka/opencl-learn/hello/build/CMakeFiles/rebuild_cache.dir
-/home/zuzanna/Documents/openCL/nauka/opencl-learn/hello/build/CMakeFiles/hello.dir
-/home/zuzanna/Documents/openCL/nauka/opencl-learn/hello/build/CMakeFiles/edit_cache.dir
