@@ -23,8 +23,8 @@
    #include <CL/cl.hpp>   
 #endif
 
-const int N = 5;
-const int size = 5;
+const int N = 100000;
+const int size = 100000;
 
 
 ////////////////
@@ -45,17 +45,6 @@ cl_device_type device_type;
 //////////////////////
 
 
-
-
-
-// Global defines, can be tweaked
-#define NUM_ELEMENTS 10000000
-#define NUM_LOOPS 1000000
-#define COPY_SIZE 400
-
-// Should be left at 100k, to avoid stack overflows with the event array
-#define NUM_LOOPS_GROUP 100000
-
 const char *getErrorString(cl_int error);
 int GetPlatformInfo(std::vector<cl::Platform> platforms, std::vector<cl::Device> devices);
 void printArray(std::string header, const int *vec);
@@ -72,11 +61,6 @@ int main(int argc, char* argv[]){
     std::array<float, N> B;
     std::array<float, N> C;
     
-    for(int i = 0; i < N; i++){
-        A[i] = 0.3 * i;
-        B[i] = i*0.2;
-        std::cout << "A[" << i << "]=" << A[i] << " B[" << i << "]=" << B[i] << std::endl;
-    }
 
     cl::Program program;
     std::vector<cl::Device> devices;
@@ -93,18 +77,8 @@ int main(int argc, char* argv[]){
             
         cl::Context context(devices);
 
-        cl::CommandQueue queue = cl::CommandQueue(context, devices[0]);       
-        
-        cl::Buffer bufferA(context, CL_MEM_READ_WRITE, N * sizeof(float)); 
-        cl::Buffer bufferB(context, CL_MEM_READ_WRITE, N * sizeof(float)); 
-        cl::Buffer bufferC(context, CL_MEM_READ_ONLY, N * sizeof(float)); 
- 
+        cl::CommandQueue queue = cl::CommandQueue(context, devices[0]);    
 
-        queue.enqueueWriteBuffer(bufferA, CL_TRUE, 0, N * sizeof(float), A.data());
-        queue.enqueueWriteBuffer(bufferB, CL_TRUE, 0, N * sizeof(float), B.data());
-            
-        
-           
         std::string pwd_path = getenv("PWD");
         std::string file_rel_path = "/../sum.cl";
         std::string path = pwd_path+file_rel_path;
@@ -119,44 +93,66 @@ int main(int argc, char* argv[]){
 
         program.build(devices);
 
-
-
         cl::Kernel kernel_vector_sum(program, "vector_sum");
         cl::Kernel kernel_vector_modulo(program, "vector_modulo");
+
+        //////
+
+
+        cl::Buffer bufferA(context,CL_MEM_READ_WRITE, N * sizeof(float));
+        cl::Buffer bufferB(context,CL_MEM_READ_WRITE, N * sizeof(float));
+        cl::Buffer bufferC(context,CL_MEM_READ_WRITE, N * sizeof(float));
+
+        
+
 
         kernel_vector_sum.setArg(0, bufferA);
         kernel_vector_sum.setArg(1, bufferB);
         kernel_vector_sum.setArg(2, bufferC);
+      
 
-        //???????
         kernel_vector_modulo.setArg(0, bufferA);
         kernel_vector_modulo.setArg(1, bufferB);
-   
-   
-        int max = 3;
+
+
+        float * hA = static_cast<float*>(queue.enqueueMapBuffer(bufferA, CL_TRUE, CL_MAP_WRITE, 0, N * sizeof(float)));
+        float * hB = static_cast<float*>(queue.enqueueMapBuffer(bufferB, CL_TRUE, CL_MAP_WRITE, 0, N * sizeof(float)));
+        float * hC = static_cast<float*>(queue.enqueueMapBuffer(bufferC, CL_TRUE, CL_MAP_WRITE, 0, N * sizeof(float)));
+        
+        
+        for(int i = 0; i < N; i++){
+            hA[i] = 0.3 * i;
+            hB[i] = i*0.2;
+            //std::cout << "A[" << i << "]=" << hA[i] << " B[" << i << "]=" << hB[i] << std::endl;
+        }
+        queue.enqueueUnmapMemObject(bufferA, hA);
+        queue.enqueueUnmapMemObject(bufferB, hB);
+        queue.enqueueUnmapMemObject(bufferC, hC);
+        
+
+
+        int max = 500000;
 
         for(int i = 0; i < max; i++){
             queue.enqueueNDRangeKernel(kernel_vector_sum, cl::NullRange, cl::NDRange(N));
+            // read from buffer slow method
             //queue.enqueueReadBuffer(bufferC, CL_TRUE, 0, N * sizeof(float), C.data());
 
-           // for(int j = 0; j < N; j++){
-            //    std::cout << "C[" << j << "]=" << C[j] << std::endl;
+            // read from buffer fast method
+            //float * out = static_cast<float*>(queue.enqueueMapBuffer(bufferC, CL_TRUE, CL_MAP_READ, 0, N * sizeof(float)));
+            
+            //for(int j = 0; j < N; j++){
+                //std::cout << "out[" << j << "]=" << out[j] << std::endl;
             //}
+            //queue.enqueueUnmapMemObject(bufferC, out);
             
             queue.enqueueNDRangeKernel(kernel_vector_modulo, cl::NullRange, cl::NDRange(N));
 
-            for(int j = 0; j < N; j++){
-                std::cout << "A[" << j << "]=" << A[j] << " B[" << j << "]=" << B[j] << std::endl;
-            }
+            //for(int j = 0; j < N; j++){
+                //std::cout << "A[" << j << "]=" << A[j] << " B[" << j << "]=" << B[j] << std::endl;
+            //}
         }
         
-
-        //queue.enqueueReadBuffer(bufferC, CL_TRUE, 0, N * N * sizeof(int), C.data());// zmienione
-         //std::cout << "output:" << std::endl;
-
-
-        
-            
 
        
     }catch(cl::Error e){
