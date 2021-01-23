@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.6)
  
 # Build type
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -15,9 +15,18 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/")
  
 
 set(CMAKE_CXX_FLAGS "-std=c++0x")
-find_package(OpenCL REQUIRED)
+#find_package(OpenCL REQUIRED)
+#find_package(BLAS REQUIRED)
 
-include_directories( ${OPENCL_INCLUDE_DIR} )
+find_package(BLAS)
+find_package(LAPACK)
+message(${BLAS_LIBRARIES})
+message(${BLAS_INCLUDE_DIRS})
+if(LAPACK_FOUND AND BLAS_FOUND)
+   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+endif()
+
+
 
 # Source code of application		
 link_directories(${OpenCL_LIBRARY})
@@ -39,4 +48,8 @@ endif (CMAKE_COMPILER_IS_GNUCC)
 # Set up executable
 
 target_include_directories (dot PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 target_link_libraries (dot ${OpenCL_LIBRARY})
+target_link_libraries(dot ${lapackblas_libraries})
+include_directories(${BLAS_INCLUDE_DIRS})
+target_link_libraries(dot ${BLAS_LIBRARIES})

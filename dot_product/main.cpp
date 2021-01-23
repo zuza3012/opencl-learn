@@ -2,12 +2,14 @@
 #include <fstream>
 #include <iostream>
 #include <exception>
+#include <stdio.h>
 
 
 #include <iomanip>
 #include <array>
 #include <stdio.h>
 #include <vector>
+#include <cblas.h>
 
 #define CL_HPP_TARGET_OPENCL_VERSION 110
 
@@ -20,6 +22,9 @@
     #include <CL/opencl.h>  
    #include <CL/cl.hpp>   
 #endif
+
+#define len 1024
+float buf_x[len]__attribute__((aligned(16)));
 
 const int N = 5;
 const int size = 5;
@@ -309,30 +314,35 @@ void PrintStdArray(const std::array<std::array<int, N>, N> &array){
 int main(int argc, char* argv[]){
     size_t datasize = N * sizeof(float);
 
+    const int lda = 3, ldb = 3, ldc = 3;
+    int m, n, k;
+    float alpha, beta;
 
-    //std::vector< std::vector<int> > matrixA;
-    //std::vector< std::vector<int> > matrixB;
-    //std::array<std::array<int, 4>, 4> arrA = {{{1,1,1,1}, {1,1,1,1}, {1,1,1,1}, {1,1,1,1}}};
-    //std::array<std::array<int, 4>, 4> arrB = {{{2,2,2,2}, {2,2,2,2}, {2,2,2,2}, {2,2,2,2}}};
-    //std::array<std::array<int, 4>, 4> arrC = {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}};
+    float a[] = { 0.00, 1.00, 1.00,
+                    1.00, 0.00, 1.00,
+                    1.00, 1.00, 0.0 };
 
-    std::array<std::array<int, 5>, 5> matrixA, matrixB, matrixC;
-    //std::vector< std::vector<int> > matrixC;
-    //int * matrixC = new int[4*4];
+    float b[] = { 1, 0, 0,
+                    1, 0, 0,
+                    -1, 0, 0 };
 
-   // for(int i = 0; i < 16; i++){
-        //matrixC[i] = 0;
-    //}
-    /*
-    std::cout << "matrix A:" << std::endl;
-    CreateMatrix(matrixA, 1.0);
-    std::cout << "matrix B:" << std::endl;
-    CreateMatrix(matrixB, 2.0);
-    std::cout << "matrix C:" << std::endl;
-    CreateMatrix(matrixC, 0.0);
-    //CreateMatrix(matrixC, 4, 0.0);
-    
-    */
+    float c[] = { 0.00, 0.00, 0,00,
+                    0.00, 0.00, 0,00,
+                    0.00, 0.00, 0,00 };
+
+    m = 3; n = 3; k = 3;
+
+    alpha = 1.0; beta = 0.0;
+
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                    m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+    printf ("[ %g, %g, %g\n", c[0], c[1], c[2]);
+    printf ("  %g, %g, %g\n", c[3], c[4], c[5]);
+    printf ("  %g, %g, %g ]\n", c[6], c[7], c[8]);
+
+    std::array<std::array<int, N>, N> matrixA, matrixB, matrixC;
+  
    int widthA = 5, widthB = 5, heightA = 5, heightB = 5;
 
     for (int i = 0; i < N; i++ ){     // rows
@@ -386,13 +396,13 @@ int main(int argc, char* argv[]){
 
         cl::CommandQueue queue = cl::CommandQueue(context, devices[0]);
       
-        cl::Buffer bufferC(context, CL_MEM_READ_ONLY, N * N* sizeof(int)); // matrix C
-        cl::Buffer bufferB(context, CL_MEM_READ_ONLY, N * N * sizeof(int)); // matrix B
-        cl::Buffer bufferA(context, CL_MEM_READ_WRITE, N * N * sizeof(int)); // matrix A
+        cl::Buffer bufferC(context, CL_MEM_READ_ONLY, N * N* sizeof(float)); // matrix C
+        cl::Buffer bufferB(context, CL_MEM_READ_ONLY, N * N * sizeof(float)); // matrix B
+        cl::Buffer bufferA(context, CL_MEM_READ_WRITE, N * N * sizeof(float)); // matrix A
  
 
-        queue.enqueueWriteBuffer(bufferA, CL_TRUE, 0, N * N * sizeof(int), matrixA.data());
-        queue.enqueueWriteBuffer(bufferB, CL_TRUE, 0, N * N* sizeof(int), matrixB.data());
+        queue.enqueueWriteBuffer(bufferA, CL_TRUE, 0, N * N * sizeof(float), matrixA.data());
+        queue.enqueueWriteBuffer(bufferB, CL_TRUE, 0, N * N* sizeof(float), matrixB.data());
             
         
            
@@ -412,8 +422,7 @@ int main(int argc, char* argv[]){
         program.build(devices);
 
         cl::Kernel kernel(program, "dot_product");
-
-    std::cout << " test 3" << std::endl;
+       
         kernel.setArg(0, bufferA);
         kernel.setArg(1, bufferB);
         kernel.setArg(2, bufferC);
@@ -422,13 +431,12 @@ int main(int argc, char* argv[]){
         kernel.setArg(5, heightA);
         kernel.setArg(6, heightB);
 
-
-        cl::NDRange global(N * N);// na razie nie uzywam
-        cl::NDRange local(4,4);
+        
 
         queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N, N));//, local);//, local); ; 
 
-        queue.enqueueReadBuffer(bufferC, CL_TRUE, 0, N * N * sizeof(int), matrixC.data());// zmienione
+
+        queue.enqueueReadBuffer(bufferC, CL_TRUE, 0, N * N * sizeof(float), matrixC.data());// zmienione
          std::cout << "Dot:" << std::endl;
         PrintStdArray(matrixC);
 /*
