@@ -314,32 +314,72 @@ void PrintStdArray(const std::array<std::array<int, N>, N> &array){
 int main(int argc, char* argv[]){
     size_t datasize = N * sizeof(float);
 
-    const int lda = 3, ldb = 3, ldc = 3;
-    int m, n, k;
-    float alpha, beta;
+    CBLAS_LAYOUT Layout;
+    CBLAS_TRANSPOSE transa;
+  
+   
+    Layout = CblasColMajor;
+    transa = CblasNoTrans;
+  
+    int m = 4; /* Size of Column ( the number of rows ) */
+    int n = 4; /* Size of Row ( the number of columns ) */
+    int lda = 4; /* Leading dimension of 5 * 4 matrix is 5 */
+    int incx = 1;
+    int incy = 1;
+    float alpha = 1;
+    float beta = 0;
+  
+    double *a = new double [m*n];
+    double *x = new double [n];
+    double *y = new double [n];
+  
+    /* The elements of the first column */
+    a[0] = 0;
+    a[1] = 1;
+    a[2] = 1;
+    a[3] = 1;
+    /* The elements of the second column */
+    a[m] = 1;
+    a[m+1] = 0;
+    a[m+2] = 1;
+    a[m+3] = 1;
+    /* The elements of the third column */
+    a[m*2] = 1;
+    a[m*2+1] = 1;
+    a[m*2+2] = 0;
+    a[m*2+3] = 1;
+    /* The elements of the fourth column */
+    a[m*3] = 1;
+    a[m*3+1] = 1;
+    a[m*3+2] = 1;
+    a[m*3+3] = 0;
+    /* The elements of x and y */
+    x[0] = 1;
+    x[1] = -1;
+    x[2] = 1;
+    x[3] = -1;
 
-    float a[] = { 0.00, 1.00, 1.00,
-                    1.00, 0.00, 1.00,
-                    1.00, 1.00, 0.0 };
+    y[0] = 0;
+    y[1] = 0;
+    y[2] = 0;
+    y[3] = 0;
+  
+    cblas_dgemv( Layout, transa, m, n, alpha, a, lda, x, incx, beta,
+                 y, incy );
 
-    float b[] = { 1, 0, 0,
-                    1, 0, 0,
-                    -1, 0, 0 };
+    //cblas_sgemv( Layout, transa, m, n, alpha, a, lda, x, incx, beta,
+                // y, incy );
 
-    float c[] = { 0.00, 0.00, 0,00,
-                    0.00, 0.00, 0,00,
-                    0.00, 0.00, 0,00 };
+    std::cout << "print y" << std::endl;
 
-    m = 3; n = 3; k = 3;
+    for(int i = 0; i < n; i++ )
+       printf(" y%d = %f\n", i, y[i]);
+    delete [] a;
+    delete [] x;
+    delete [] y;             
+                   
 
-    alpha = 1.0; beta = 0.0;
-
-    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                    m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-
-    printf ("[ %g, %g, %g\n", c[0], c[1], c[2]);
-    printf ("  %g, %g, %g\n", c[3], c[4], c[5]);
-    printf ("  %g, %g, %g ]\n", c[6], c[7], c[8]);
+    
 
     std::array<std::array<int, N>, N> matrixA, matrixB, matrixC;
   
